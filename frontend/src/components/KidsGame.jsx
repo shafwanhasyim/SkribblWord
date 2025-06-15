@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import apiClient from '../api/apiClient';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Star, AlertCircle, RefreshCw, PlayCircle, Image } from 'lucide-react';
 
 const KidsGame = ({ onBackToModeSelection }) => {
   // State management
-  const [wordData, setWordData] = useState(null); // For storing { wordId, imageUrl, letters }
-  const [availableLetters, setAvailableLetters] = useState([]); // Array of clickable letter cards
-  const [answerSlots, setAnswerSlots] = useState([]); // Array of answer slots
+  const [wordData, setWordData] = useState(null);
+  const [availableLetters, setAvailableLetters] = useState([]);
+  const [answerSlots, setAnswerSlots] = useState([]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -289,183 +291,467 @@ const KidsGame = ({ onBackToModeSelection }) => {
 
   // Add retry button component for error states
   const renderRetryButton = () => (
-    <div className="mt-4 text-center">
-      <button 
-        className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+    <motion.div 
+      className="mt-4 text-center"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.button 
+        className="btn bg-gradient-to-r from-amber-400 to-amber-500 text-white font-medium py-2 px-6 rounded-xl shadow-md hover:shadow-lg"
         onClick={wordData ? getNextWord : fetchNewWord}
         disabled={isLoading}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
+        <RefreshCw className="inline-block mr-2 h-4 w-4" />
         {isLoading ? 'Mencoba ulang...' : 'Coba Lagi'}
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 
   // Render game setup UI
   const renderGameSetupForm = () => (
-    <div className="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-green-700 mb-6">Mode Anak</h2>
+    <motion.div 
+      className="card bg-white shadow-xl rounded-2xl p-8 max-w-md mx-auto overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      <motion.div className="relative mb-8">
+        <motion.div 
+          className="absolute -top-12 -left-12 w-32 h-32 bg-primary/20 rounded-full"
+          animate={{ 
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ 
+            repeat: Infinity,
+            duration: 4, 
+            ease: "easeInOut" 
+          }}
+        />
+        <motion.h2 
+          className="text-3xl font-bold text-primary mb-2 relative z-10"
+          initial={{ x: -20 }}
+          animate={{ x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          Mode Anak
+        </motion.h2>
+        <motion.p 
+          className="text-gray-600"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          Permainan kata untuk anak-anak dengan gambar
+        </motion.p>
+      </motion.div>
       
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-          {renderRetryButton()}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <p className="text-red-700">{error}</p>
+            </div>
+            {renderRetryButton()}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      <div className="p-4 mb-6 bg-yellow-50 rounded-lg border border-yellow-100">
-        <h3 className="font-medium text-gray-800 mb-2">Cara Bermain:</h3>
-        <ul className="list-disc ml-5 text-sm text-gray-600 space-y-1">
-          <li>Lihat gambar yang ditampilkan</li>
-          <li>Pilih kartu huruf untuk menyusun kata yang sesuai dengan gambar</li>
-          <li>Tekan "Periksa Jawaban" jika sudah yakin</li>
-          <li>Dapatkan poin untuk setiap jawaban benar!</li>
-        </ul>
-      </div>
+      <motion.div 
+        className="p-6 mb-8 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 shadow-inner"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <motion.div 
+          className="flex items-center gap-3 mb-3"
+          initial={{ y: -10 }}
+          animate={{ y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Star className="h-5 w-5 text-amber-500" />
+          <h3 className="font-semibold text-lg text-amber-800">Cara Bermain:</h3>
+        </motion.div>
+        <motion.ul 
+          className="space-y-2 text-gray-700"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, staggerChildren: 0.1 }}
+        >
+          <motion.li 
+            className="flex items-start"
+            initial={{ x: -10, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <span className="inline-block bg-amber-300 text-amber-700 rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold mr-2">1</span>
+            Lihat gambar yang ditampilkan
+          </motion.li>
+          <motion.li 
+            className="flex items-start"
+            initial={{ x: -10, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <span className="inline-block bg-amber-300 text-amber-700 rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold mr-2">2</span>
+            Pilih kartu huruf untuk menyusun kata yang sesuai dengan gambar
+          </motion.li>
+          <motion.li 
+            className="flex items-start"
+            initial={{ x: -10, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            <span className="inline-block bg-amber-300 text-amber-700 rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold mr-2">3</span>
+            Tekan "Periksa Jawaban" jika sudah yakin
+          </motion.li>
+          <motion.li 
+            className="flex items-start"
+            initial={{ x: -10, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+          >
+            <span className="inline-block bg-amber-300 text-amber-700 rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold mr-2">4</span>
+            Dapatkan poin untuk setiap jawaban benar!
+          </motion.li>
+        </motion.ul>
+      </motion.div>
       
-      <div className="mt-8">
-        <button
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+      <motion.div 
+        className="mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
+        <motion.button
+          className="w-full btn bg-primary hover:bg-primary/90 text-white font-medium py-4 px-6 rounded-xl flex items-center justify-center shadow-md hover:shadow-lg"
           onClick={handleStartGame}
           disabled={isLoading}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
+          <PlayCircle className="mr-2 h-5 w-5" />
           {isLoading ? 'Memulai Permainan...' : 'Mulai Permainan'}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
       
-      <div className="mt-4 text-center">
-        <button 
-          className="text-gray-500 hover:text-green-600 transition duration-200"
+      <motion.div 
+        className="mt-6 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <motion.button 
+          className="text-gray-500 hover:text-primary flex items-center justify-center mx-auto"
           onClick={onBackToModeSelection}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
+          <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali ke Pilihan Mode
-        </button>
-      </div>
-    </div>
+        </motion.button>
+      </motion.div>
+    </motion.div>
   );
   
   // Render active game UI
   const renderGameUI = () => (
-    <div className="bg-white shadow-md rounded-lg p-6 max-w-lg mx-auto">
+    <motion.div 
+      className="card bg-white shadow-xl rounded-2xl p-6 max-w-2xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Game Header with Points */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <span className="text-sm text-gray-600">Poin:</span>
-          <h3 className="text-2xl font-bold text-green-700">{score}</h3>
-        </div>
-        <div>
-          <span className="text-sm text-gray-600">Kata:</span>
-          <h3 className="text-lg font-bold text-green-700">{gameStats.currentWordNumber}/{gameStats.totalWords}</h3>
-        </div>
-      </div>
-      
-      {/* Success/Error Messages */}
-      {successMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-center animate-pulse">
-          {successMessage}
-        </div>
-      )}
-      
-      {/* Feedback message with animation */}
-      {feedback && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-4 text-center font-bold text-xl animate-bounce">
-          {feedback}
-        </div>
-      )}
-      
-      {errorMessage && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
-          {errorMessage}
-        </div>
-      )}
+      <motion.div 
+        className="flex justify-between items-center mb-6"
+        layout
+      >
+        <motion.div 
+          className="flex items-center px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/20 rounded-xl"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Star className="h-5 w-5 text-amber-500 mr-2" />
+          <span className="text-sm font-medium text-gray-600 mr-2">Poin:</span>
+          <motion.span 
+            className="text-2xl font-bold text-primary"
+            key={score}
+            initial={{ scale: 1.3 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            {score}
+          </motion.span>
+        </motion.div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
-          {error}
-          {renderRetryButton()}
-        </div>
-      )}
+        <motion.div 
+          className="px-4 py-2 bg-gradient-to-r from-secondary/10 to-secondary/20 rounded-xl"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span className="text-sm font-medium text-gray-600 mr-2">Kata:</span>
+          <span className="text-lg font-bold text-secondary">
+            {gameStats.currentWordNumber}/{gameStats.totalWords}
+          </span>
+        </motion.div>
+      </motion.div>
+      
+      {/* Messages area with AnimatePresence for smooth transitions */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div 
+            className="bg-green-100 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded mb-4 flex items-center"
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="text-xl mr-2">✅</span>
+            <span className="font-medium">{successMessage}</span>
+          </motion.div>
+        )}
+        
+        {feedback && (
+          <motion.div 
+            className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-4 rounded-xl mb-4 text-center font-bold text-xl"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1,
+              y: [0, -5, 0],
+            }}
+            transition={{ 
+              duration: 0.3,
+              y: { repeat: Infinity, duration: 1.5 }
+            }}
+          >
+            {feedback}
+          </motion.div>
+        )}
+        
+        {errorMessage && (
+          <motion.div 
+            className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4 flex items-center"
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span className="font-medium">{errorMessage}</span>
+          </motion.div>
+        )}
+
+        {error && (
+          <motion.div 
+            className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-4"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <span>{error}</span>
+            </div>
+            {renderRetryButton()}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Image Display */}
-      <div className="mb-6 flex justify-center">
-        {wordData && wordData.imageUrl && (
-          <img 
-            src={wordData.imageUrl} 
-            alt="Tebak kata ini" 
-            className="rounded-lg border-4 border-green-100 shadow-md max-h-60 object-contain"
-          />
+      <motion.div 
+        className="mb-8 flex justify-center"
+        layout
+        transition={{ type: "spring", stiffness: 100 }}
+      >
+        {wordData && wordData.imageUrl ? (
+          <motion.div
+            className="relative rounded-xl overflow-hidden shadow-lg border-4 border-primary/20 bg-white"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.02 }}
+          >
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            />
+            <motion.img 
+              src={wordData.imageUrl} 
+              alt="Tebak kata ini" 
+              className="max-h-60 object-contain p-1 z-10 relative"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            />
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="w-60 h-60 bg-gray-200 flex items-center justify-center rounded-xl border-4 border-dashed border-gray-300"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Image className="h-12 w-12 text-gray-400" />
+          </motion.div>
         )}
-      </div>
+      </motion.div>
       
       {/* Answer Slots */}
-      <div className="bg-green-50 p-6 rounded-lg mb-6">
-        <p className="text-gray-600 text-sm mb-4 text-center">
+      <motion.div 
+        className="p-6 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 shadow-inner mb-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <motion.p 
+          className="text-gray-600 text-sm mb-4 text-center font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
           Susun kata yang sesuai dengan gambar:
-        </p>
-        <div className="flex justify-center space-x-2 min-h-14 mb-4">
-          {answerSlots.map((slot, idx) => (
-            <div
-              key={`slot-${idx}`}
-              className={`inline-block w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold transition-all duration-200 ${
-                slot 
-                  ? 'bg-green-200 cursor-pointer border-2 border-green-500 hover:bg-green-300' 
-                  : 'bg-gray-100 border-2 border-dashed border-gray-300'
-              }`}
-              onClick={() => slot && handleSlotClick(idx)}
-            >
-              {slot ? slot.letter : ''}
-            </div>
-          ))}
-        </div>
+        </motion.p>
+        <motion.div 
+          className="flex justify-center gap-3 min-h-16 mb-6"
+          layout
+        >
+          <AnimatePresence>
+            {answerSlots.map((slot, idx) => (
+              <motion.div
+                key={`slot-${idx}`}
+                className={`w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold shadow transition ${
+                  slot 
+                    ? 'bg-gradient-to-br from-primary/80 to-primary cursor-pointer text-white border-2 border-primary/80' 
+                    : 'bg-white/80 border-2 border-dashed border-gray-300'
+                }`}
+                onClick={() => slot && handleSlotClick(idx)}
+                whileHover={slot ? { scale: 1.05, rotate: 3 } : {}}
+                whileTap={slot ? { scale: 0.95 } : {}}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 20,
+                  delay: idx * 0.05
+                }}
+                layout
+              >
+                {slot ? slot.letter : ''}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
         
         {/* Available Letter Cards */}
-        <div className="grid grid-cols-5 gap-3 mt-6">
-          {availableLetters.map((letter) => (
-            <div
-              key={letter.id}
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold cursor-pointer bg-yellow-200 hover:bg-yellow-300 text-yellow-800 shadow-sm hover:shadow transition-all duration-200"
-              onClick={() => handleLetterClick(letter)}
-            >
-              {letter.letter}
-            </div>
-          ))}
-        </div>
-      </div>
+        <motion.div 
+          className="grid grid-cols-5 gap-3 mt-6"
+          layout
+        >
+          <AnimatePresence>
+            {availableLetters.map((letter, index) => (
+              <motion.div
+                key={letter.id}
+                className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold cursor-pointer bg-gradient-to-br from-amber-200 to-amber-300 text-amber-900 shadow-md"
+                onClick={() => handleLetterClick(letter)}
+                initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 15,
+                  delay: index * 0.03 
+                }}
+                whileHover={{ scale: 1.1, rotate: Math.random() * 6 - 3 }}
+                whileTap={{ scale: 0.9 }}
+                layout
+              >
+                {letter.letter}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
       
       {/* Buttons */}
-      <div className="mt-4 flex space-x-3">
-        <button
-          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition duration-200"
+      <motion.div 
+        className="mt-6 flex gap-4"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <motion.button
+          className="flex-1 btn bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl shadow transition flex items-center justify-center"
           onClick={handleClearSelection}
           disabled={answerSlots.every(slot => slot === null)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
+          <RefreshCw className="h-4 w-4 mr-2" />
           Hapus Pilihan
-        </button>
-        <button
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+        </motion.button>
+        <motion.button
+          className={`flex-1 btn text-white font-medium py-3 px-4 rounded-xl shadow-md flex items-center justify-center
+            ${answerSlots.includes(null) ? 'bg-gray-400' : 'bg-gradient-to-br from-primary to-primary/90 hover:shadow-lg'}`}
           onClick={handleManualSubmit}
           disabled={answerSlots.includes(null)}
+          whileHover={!answerSlots.includes(null) ? { scale: 1.02 } : {}}
+          whileTap={!answerSlots.includes(null) ? { scale: 0.98 } : {}}
         >
           Periksa Jawaban
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
       
-      <div className="mt-6 text-center">
-        <button 
-          className="text-gray-500 hover:text-green-600 transition duration-200"
+      <motion.div 
+        className="mt-6 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+      >
+        <motion.button 
+          className="text-gray-500 hover:text-primary flex items-center justify-center mx-auto"
           onClick={onBackToModeSelection}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
+          <ArrowLeft className="h-4 w-4 mr-1" />
           Kembali ke Pilihan Mode
-        </button>
-      </div>
-    </div>
+        </motion.button>
+      </motion.div>
+    </motion.div>
   );
   
   return (
-    <div>
+    <div className="px-4 py-6">
       {isLoading && !wordData ? (
-        <div className="flex justify-center items-center min-h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-        </div>
+        <motion.div 
+          className="flex justify-center items-center min-h-64"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div 
+            className="w-16 h-16 border-4 rounded-full border-primary border-t-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          />
+        </motion.div>
       ) : gameStarted && wordData ? (
         renderGameUI()
       ) : (

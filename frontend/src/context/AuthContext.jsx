@@ -8,44 +8,39 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  // State to track auth status
+  // State untuk melacak status otentikasi
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  // Effect to check for stored token on component mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem('jwt-token');
-    const storedUser = localStorage.getItem('user-data');
+  // PERBAIKAN: Tambahkan state isLoading, awalnya true
+  const [isLoading, setIsLoading] = useState(true);
 
-    // Only proceed if we have both token and user data, and user data isn't "undefined"
-    if (storedToken && storedUser && storedUser !== "undefined") {
-      try {
-        // Safely parse the user data
+  // Effect untuk memeriksa token saat aplikasi dimuat
+  useEffect(() => {
+    try {
+      const storedToken = localStorage.getItem('jwt-token');
+      const storedUser = localStorage.getItem('user-data');
+
+      if (storedToken && storedUser && storedUser !== "undefined") {
         const parsedUser = JSON.parse(storedUser);
-        
-        // Make sure parsed data is an object
         if (parsedUser && typeof parsedUser === 'object') {
           setToken(storedToken);
           setUser(parsedUser);
           setIsLoggedIn(true);
-        } else {
-          // If parsed data isn't valid, clean up
-          console.error("Invalid user data format in localStorage");
-          localStorage.removeItem('jwt-token');
-          localStorage.removeItem('user-data');
         }
-      } catch (error) {
-        // Handle JSON parse errors
-        console.error("Error parsing user data from localStorage:", error);
-        
-        // Clean up corrupted data
-        localStorage.removeItem('jwt-token');
-        localStorage.removeItem('user-data');
       }
+    } catch (error) {
+      console.error("Gagal memuat data sesi, membersihkan...", error);
+      // Jika ada error (misal: data rusak), bersihkan localStorage
+      localStorage.removeItem('jwt-token');
+      localStorage.removeItem('user-data');
+    } finally {
+      // PERBAIKAN: Set isLoading menjadi false SETELAH semua pengecekan selesai
+      setIsLoading(false);
     }
   }, []);
 
-  // Login function: store token and user info
+  // Fungsi login: simpan token dan data user
   const login = (newToken, userData) => {
     localStorage.setItem('jwt-token', newToken);
     localStorage.setItem('user-data', JSON.stringify(userData));
@@ -55,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoggedIn(true);
   };
 
-  // Logout function: remove token and reset state
+  // Fungsi logout: hapus token dan reset state
   const logout = () => {
     localStorage.removeItem('jwt-token');
     localStorage.removeItem('user-data');
@@ -65,11 +60,12 @@ export const AuthProvider = ({ children }) => {
     setIsLoggedIn(false);
   };
 
-  // Value to be provided by the context
+  // Nilai yang akan disediakan oleh context
   const contextValue = {
     isLoggedIn,
     user,
     token,
+    isLoading, // PERBAIKAN: Ekspor isLoading agar bisa digunakan komponen lain
     login,
     logout
   };
@@ -81,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// PropTypes validation
+// Validasi PropTypes
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired
 };

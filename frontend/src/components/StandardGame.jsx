@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import apiClient from '../api/apiClient';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Clock, Heart, Zap, ArrowLeft, Loader, CheckCircle } from 'lucide-react';
 
 const StandardGame = ({ gameMode, onBackToModeSelection }) => {
   // State untuk konfigurasi dan UI
@@ -18,19 +20,18 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
   
   const navigate = useNavigate();
   
-  // Fungsi untuk mengakhiri permainan, sekarang lebih aman.
-  // useCallback memastikan fungsi ini tidak dibuat ulang di setiap render,
-  // kecuali dependensinya berubah.
+  // PERBAIKAN: Fungsi tunggal dan aman untuk mengakhiri permainan.
+  // useCallback memastikan fungsi ini tidak dibuat ulang di setiap render.
   const handleEndGame = useCallback(async () => {
-    // Penjaga (Guard Clause) untuk mencegah fungsi ini dipanggil berkali-kali
+    // Penjaga (Guard Clause) untuk mencegah fungsi ini dipanggil berkali-kali.
     if (isEnding || !gameState) return; 
 
-    setIsEnding(true); // Tandai bahwa proses pengakhiran sedang berjalan
+    setIsEnding(true); // Tandai bahwa proses pengakhiran sedang berjalan.
 
     try {
-      // Panggil endpoint /end untuk memastikan skor disimpan di backend
+      // Panggil endpoint /end untuk memastikan skor disimpan di backend.
       const response = await apiClient.post('/game/end');
-      // Arahkan ke halaman game over dengan data skor final dari backend
+      // Arahkan ke halaman game over dengan data skor final dari backend.
       navigate('/game-over', { 
         state: { 
           score: response.data.score, 
@@ -39,7 +40,7 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
       });
     } catch (err) {
       console.error('Error ending game, navigating with local score:', err);
-      // Fallback: Jika API gagal, tetap arahkan dengan skor terakhir yang diketahui
+      // Fallback: Jika API gagal, tetap arahkan dengan skor terakhir yang diketahui.
       navigate('/game-over', { 
         state: { 
           score: gameState.score, 
@@ -47,13 +48,13 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
         } 
       });
     }
-  }, [gameState, gameMode, navigate, isEnding]); // isEnding ditambahkan ke dependensi
+  }, [gameState, gameMode, navigate, isEnding]);
 
   // Fungsi untuk memulai permainan baru
   const handleStartGame = async () => {
     setIsLoading(true);
     setError('');
-    setIsEnding(false); // Reset status pengakhiran game
+    setIsEnding(false); // Reset status pengakhiran game saat memulai yang baru.
     try {
       const response = await apiClient.post('/game/start', {
         gameMode,
@@ -80,12 +81,12 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
       
       setPlayerInput(''); // Selalu reset input
       
-      // PERBAIKAN KUNCI: Cek kondisi game over dari respons backend
+      // PERBAIKAN: Cek kondisi game over dari respons backend.
       if (response.data.isGameOver) {
-        // Jika game berakhir, panggil fungsi end game, jangan set state lagi
+        // Jika game berakhir, panggil fungsi end game. Navigasi akan ditangani di sana.
         handleEndGame();
       } else {
-        // Jika permainan berlanjut, baru perbarui state
+        // Jika permainan berlanjut, baru perbarui state.
         setGameState(response.data);
       }
     } catch (err) {
@@ -94,59 +95,76 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
     }
   };
 
-  // useEffect untuk menangani timer, sekarang lebih sederhana
+  // useEffect untuk menangani timer, sekarang lebih aman dan sederhana.
   useEffect(() => {
-    // Jangan jalankan timer jika game belum dimulai atau bukan mode Time Attack
     if (gameMode !== 'TIME_ATTACK' || !gameState) {
       return;
     }
 
-    // Jika waktu sudah 0, panggil handleEndGame
+    // Jika waktu sudah 0 atau kurang saat render, langsung akhiri.
     if (gameState.timeLeftSeconds <= 0) {
       handleEndGame();
-      return; // Hentikan eksekusi lebih lanjut
+      return;
     }
 
-    // Set interval untuk mengurangi waktu setiap detik
+    // Set interval untuk mengurangi waktu setiap detik.
     const timerId = setInterval(() => {
-      setGameState(prev => ({
-        ...prev,
-        timeLeftSeconds: prev.timeLeftSeconds - 1,
-      }));
+      setGameState(prev => {
+        // Penjaga untuk mencegah error jika state tiba-tiba null.
+        if (!prev) {
+          clearInterval(timerId);
+          return null;
+        }
+        return { ...prev, timeLeftSeconds: prev.timeLeftSeconds - 1 };
+      });
     }, 1000);
 
-    // Cleanup function untuk membersihkan interval saat komponen di-unmount
+    // Cleanup function untuk membersihkan interval.
     return () => clearInterval(timerId);
 
-  }, [gameState, gameMode, handleEndGame]); // handleEndGame ditambahkan ke dependensi
+  }, [gameState, gameMode, handleEndGame]);
 
-  // ===============================================
-  // BAGIAN RENDER UTAMA DENGAN LOGIKA YANG DIPERBAIKI
-  // ===============================================
+  // =======================================================
+  // BAGIAN RENDER UTAMA DENGAN STRUKTUR YANG LEBIH AMAN
+  // =======================================================
 
-  // Jika game sedang aktif, tampilkan UI permainan
+  // Kondisi 1: Tampilkan UI permainan JIKA gameState ada.
   if (gameState) {
     return (
-      <div className="bg-white shadow-md rounded-lg p-6 max-w-lg mx-auto">
-        <div className="flex justify-between items-center mb-6">
+      <motion.div 
+        className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex justify-between items-center mb-6 sm:mb-8">
+          {/* Skor */}
           <div>
             <span className="text-sm text-gray-600">Skor:</span>
-            <h3 className="text-2xl font-bold text-indigo-700">{gameState.score}</h3>
+            <h3 className="text-2xl sm:text-3xl font-bold text-indigo-700">{gameState.score}</h3>
           </div>
           
-          {gameMode === 'TIME_ATTACK' && (
-            <div className={`px-4 py-2 rounded-lg ${gameState.timeLeftSeconds > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800 animate-pulse'}`}>
-              <span className="text-sm">Waktu:</span>
-              <span className="ml-1 font-bold">{gameState.timeLeftSeconds}s</span>
+          {/* Streak */}
+          <div className="text-center">
+            <span className="text-sm text-gray-600">Streak</span>
+            <h3 className="text-2xl sm:text-3xl font-bold text-amber-500 flex items-center justify-center">
+              {gameState.streakCount}
+              {gameState.streakCount >= 3 && <span className="ml-1">🔥</span>}
+            </h3>
+          </div>
+
+          {/* Timer atau Nyawa */}
+          {gameMode === 'TIME_ATTACK' ? (
+            <div>
+              <span className="text-sm text-gray-600">Waktu:</span>
+              <h3 className={`text-2xl sm:text-3xl font-bold ${gameState.timeLeftSeconds <= 10 ? 'text-red-500 animate-pulse' : 'text-green-600'}`}>{gameState.timeLeftSeconds}s</h3>
             </div>
-          )}
-          
-          {gameMode === 'SURVIVAL' && (
+          ) : (
             <div>
               <span className="text-sm text-gray-600">Nyawa:</span>
-              <div className="flex items-center">
-                {Array.from({ length: gameState.lives || 0 }, (_, i) => (
-                  <span key={i} className="text-red-500 text-xl mx-0.5">❤️</span>
+              <div className="flex items-center mt-1">
+                {Array.from({ length: gameState.lives || 0 }).map((_, i) => (
+                  <Heart key={i} className="text-red-500 fill-current" size={24} />
                 ))}
               </div>
             </div>
@@ -155,20 +173,20 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
         
         <div className="bg-indigo-50 p-6 rounded-lg mb-6 text-center">
           <p className="text-gray-600 text-sm mb-2">Tebak kata ini:</p>
-          <h2 className="text-4xl font-bold tracking-wider text-indigo-900 mb-2 flex justify-center flex-wrap">
+          <div className="text-3xl sm:text-4xl font-bold tracking-wider text-indigo-900 flex justify-center flex-wrap gap-2">
             {/* PERBAIKAN PENTING: Tambahkan pengecekan sebelum .split() */}
             {gameState.scrambledWord && gameState.scrambledWord.split('').map((char, idx) => (
-              <span key={idx} className="inline-block mx-1 min-w-8 py-2 border-b-2 border-indigo-400">
+              <span key={idx} className="bg-white shadow-sm rounded-md px-3 py-2 border-b-4 border-indigo-200">
                 {char}
               </span>
             ))}
-          </h2>
+          </div>
         </div>
         
         <form onSubmit={handleSubmitAnswer}>
           <input
             type="text"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg text-center"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg text-center"
             value={playerInput}
             onChange={(e) => setPlayerInput(e.target.value.toUpperCase())}
             placeholder="Ketik jawaban Anda..."
@@ -179,22 +197,29 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
             Kirim Jawaban
           </button>
         </form>
-      </div>
+      </motion.div>
     );
   }
 
-  // Jika tidak ada gameState (game belum dimulai), tampilkan UI setup
+  // Kondisi 2 (DEFAULT): Jika tidak ada gameState, tampilkan UI setup.
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-indigo-700 mb-6">
-        Mode {gameMode.replace('_', ' ')}
-      </h2>
+    <motion.div 
+      className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 max-w-md mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className="flex items-center gap-3 mb-6">
+        {gameMode === 'TIME_ATTACK' ? <Clock size={30} className="text-indigo-500" /> : <Heart size={30} className="text-red-500" />}
+        <h2 className="text-3xl font-bold text-gray-800">
+          Mode {gameMode.replace('_', ' ')}
+        </h2>
+      </div>
       
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+      {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">{error}</div>}
       
       <div className="mb-6">
         <label className="block text-gray-700 font-medium mb-2">Tingkat Kesulitan</label>
-        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
+        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg bg-white">
           <option value="EASY">Mudah</option>
           <option value="MEDIUM">Sedang</option>
           <option value="HARD">Sulit</option>
@@ -204,7 +229,7 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
       
       <div className="mt-8">
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 disabled:bg-gray-400"
           onClick={handleStartGame}
           disabled={isLoading}
         >
@@ -214,13 +239,14 @@ const StandardGame = ({ gameMode, onBackToModeSelection }) => {
       
       <div className="mt-4 text-center">
         <button 
-          className="text-gray-500 hover:text-indigo-600 transition duration-200"
+          className="text-gray-500 hover:text-indigo-600 font-medium flex items-center gap-1 mx-auto"
           onClick={onBackToModeSelection}
         >
-          Kembali ke Pilihan Mode
+          <ArrowLeft size={16} />
+          <span>Pilih Mode Lain</span>
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -230,3 +256,4 @@ StandardGame.propTypes = {
 };
 
 export default StandardGame;
+

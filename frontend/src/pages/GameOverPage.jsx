@@ -1,63 +1,92 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Trophy, Home, RotateCcw } from 'lucide-react';
 
 const GameOverPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Ambil data skor dari state lokasi dengan fallback untuk mencegah error
-  const { score, gameMode } = location.state || { score: 0, gameMode: 'UNKNOWN' };
+  const { score = 0, gameMode = 'UNKNOWN' } = location.state || {};
   
-  // Menentukan gaya warna berdasarkan game mode
-  const getGameModeColor = () => {
-    return gameMode === 'TIME_ATTACK' 
-      ? 'bg-indigo-600 hover:bg-indigo-700' 
-      : 'bg-red-600 hover:bg-red-700';
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.3
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    show: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full text-center">
-        <div className="bg-yellow-50 p-8 rounded-lg border-2 border-yellow-300">
-          <h1 className="text-4xl font-extrabold text-yellow-800 mb-4">Permainan Selesai!</h1>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <motion.div 
+        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={itemVariants}>
+            <Trophy className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+            <h1 className="text-4xl font-extrabold text-gray-800">Permainan Selesai!</h1>
+          </motion.div>
           
-          <div className="mb-8">
-            <span className="text-lg text-gray-700">Skor Akhir Anda:</span>
-            <h2 className="text-6xl font-bold text-yellow-700 mt-4">{score}</h2>
-            {gameMode !== 'UNKNOWN' && (
-              <div className="mt-3">
-                <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700">
-                  Mode: {gameMode === 'TIME_ATTACK' ? 'Time Attack' : 'Survival'}
-                </span>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => navigate('/game')}
-              className={`${getGameModeColor()} text-white font-bold py-3 px-8 rounded-lg transition duration-200`}
+          <motion.div 
+            className="my-6"
+            variants={itemVariants}
+          >
+            <p className="text-gray-600 text-lg">Skor Akhir Anda</p>
+            <motion.p 
+              className="text-7xl font-bold text-indigo-600"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 120 }}
             >
+              {score}
+            </motion.p>
+          </motion.div>
+
+          <motion.div 
+            className="flex flex-col gap-4"
+            variants={itemVariants}
+          >
+            <button
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg"
+              onClick={() => navigate('/game')}
+            >
+              <RotateCcw className="inline-block h-5 w-5 mr-2" />
               Main Lagi
             </button>
             <button
+              className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-lg"
               onClick={() => navigate('/')}
-              className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-8 rounded-lg transition duration-200"
             >
+              <Home className="inline-block h-5 w-5 mr-2" />
               Ke Beranda
             </button>
-          </div>
-        </div>
-        
-        <div className="mt-6">
-          <button 
-            onClick={() => navigate('/leaderboard')}
-            className="text-indigo-600 hover:text-indigo-800 underline"
-          >
-            Lihat Papan Peringkat
-          </button>
-        </div>
-      </div>
+          </motion.div>
+
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
